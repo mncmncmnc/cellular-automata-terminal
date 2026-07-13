@@ -16,7 +16,7 @@ Bindings:
     g               toggle grid lines
     b               toggle wrap / bounded edges
     + / -           faster / slower
-    t               cycle theme (green / yellow / white / rainbow)
+    t               cycle theme (rainbow / green / yellow / white)
     s               save state
     l               load most recent save
     ?               help overlay
@@ -226,7 +226,7 @@ def rotate_ccw(coords, times=1):
 
 # Themes
 
-THEMES = ['green', 'yellow', 'white', 'rainbow']
+THEMES = ['rainbow', 'green', 'yellow', 'white']
 
 
 # Life engine
@@ -247,6 +247,18 @@ class Life:
 
     def in_bounds(self, r, c):
         return 0 <= r < self.height and 0 <= c < self.width
+
+    def resize(self, height, width):
+        """Grow or shrink the grid. Shrinking drops out-of-bounds cells."""
+        height = max(1, height)
+        width = max(1, width)
+        if height == self.height and width == self.width:
+            return
+        if height < self.height or width < self.width:
+            self.cells = {(r, c) for r, c in self.cells if r < height and c < width}
+            self.ages = {pos: age for pos, age in self.ages.items() if pos in self.cells}
+        self.height = height
+        self.width = width
 
     def set_cell(self, r, c, alive=True):
         if not self.in_bounds(r, c):
@@ -362,12 +374,14 @@ HELP_LINES = [
 
 
 class UI:
-    def __init__(self, stdscr, life, theme='green', show_grid=True, speed=10):
+    def __init__(self, stdscr, life, theme='rainbow', show_grid=True, speed=10,
+                 fit_terminal=True):
         self.stdscr = stdscr
         self.life = life
-        self.theme_name = theme if theme in THEMES else 'green'
+        self.theme_name = theme if theme in THEMES else 'rainbow'
         self.show_grid = show_grid
         self.speed = max(1, min(60, speed))
+        self.fit_terminal = fit_terminal
         self.running = False
         self.cursor = [life.height // 2, life.width // 2]
         self.random_densities = [0.10, 0.25, 0.50]
@@ -705,6 +719,15 @@ class UI:
         self.cursor[0] = max(0, min(self.life.height - 1, self.cursor[0] + dr))
         self.cursor[1] = max(0, min(self.life.width - 1, self.cursor[1] + dc))
 
+    def handle_resize(self):
+        """Match the grid to the terminal when size isn't locked by CLI flags."""
+        if not self.fit_terminal:
+            return
+        H, W = self.stdscr.getmaxyx()
+        self.life.resize(max(10, H - 1), max(20, W - 1))
+        self.cursor[0] = max(0, min(self.life.height - 1, self.cursor[0]))
+        self.cursor[1] = max(0, min(self.life.width - 1, self.cursor[1]))
+
     def random_fill(self):
         d = self.random_densities[self.density_idx]
         self.life.random_fill(d)
@@ -737,6 +760,7 @@ class UI:
             if k == -1:
                 continue
             if k == curses.KEY_RESIZE:
+                self.handle_resize()
                 continue
 
             if k == ord('q'):
@@ -808,6 +832,7 @@ def build_life(args, stdscr=None):
 
     height = args.height or auto_h
     width = args.width or auto_w
+    fit_terminal = args.height is None and args.width is None
     life = Life(height, width, wrap=not args.bounded)
 
     if args.load:
@@ -827,17 +852,18 @@ def build_life(args, stdscr=None):
     elif args.random is not None:
         life.random_fill(max(0.0, min(1.0, args.random / 100.0)))
 
-    return life
+    return life, fit_terminal
 
 
 def _curses_main(stdscr, args):
-    life = build_life(args, stdscr)
+    life, fit_terminal = build_life(args, stdscr)
     ui = UI(
         stdscr,
         life,
         theme=args.theme,
         show_grid=not args.no_grid,
         speed=args.speed,
+        fit_terminal=fit_terminal,
     )
     ui.run()
 
@@ -855,8 +881,8 @@ def main():
                         help='random-fill at this density (0-100)')
     parser.add_argument('--speed', metavar='N', type=int, default=10,
                         help='initial generations per second (1-60, default 10)')
-    parser.add_argument('--theme', choices=THEMES, default='green',
-                        help='color theme (default: green)')
+    parser.add_argument('--theme', choices=THEMES, default='rainbow',
+                        help='color theme (default: rainbow)')
     parser.add_argument('--no-grid', action='store_true',
                         help='start with grid lines off')
     parser.add_argument('--bounded', action='store_true',

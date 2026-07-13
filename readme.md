@@ -8,7 +8,7 @@ Conway's Game of Life for the terminal, mostly adapted from a bootleg 1990s Turb
 python3 life.py --pattern glider --speed 20      # glider, moving
 python3 life.py --pattern gosper_gun             # gun that fires gliders
 python3 life.py --pattern r_pentomino            # chaotic methuselah
-python3 life.py --random 25 --theme rainbow      # 25% random, color by age
+python3 life.py --random 25                       # 25% random, age-colored
 python3 life.py --list-patterns                  # see everything available
 ```
 
@@ -19,7 +19,7 @@ python3 life.py --list-patterns                  # see everything available
 | `enter` | Play / pause |
 | `space` | Toggle cell under cursor |
 | `p` | Open pattern picker (browse, pick, rotate with `[` / `]`, stamp) |
-| `t` | Cycle theme (green -> yellow -> white -> rainbow) |
+| `t` | Cycle theme (rainbow -> green -> yellow -> white) |
 | `g` | Toggle grid lines |
 | `+` / `-` | Speed up / down |
 | `?` | Full help overlay |
@@ -38,7 +38,7 @@ python3 life.py [options]
 | `--pattern NAME` | Start with a named pattern centered on the grid |
 | `--random PCT` | Random-fill the grid at PCT% density (0-100) |
 | `--speed N` | Initial speed in generations per second (1-60, default 10) |
-| `--theme NAME` | Starting color theme: green, yellow, white, rainbow (default: green) |
+| `--theme NAME` | Starting color theme: rainbow, green, yellow, white (default: rainbow) |
 | `--no-grid` | Start with grid dot markers off |
 | `--bounded` | Use bounded edges instead of wrap-around |
 | `--width N` | Grid width in cells (default: fits terminal) |
@@ -79,7 +79,7 @@ n  or  .   Step forward one generation (paused only)
 
 ```
 g    Toggle grid dot markers on / off
-t    Cycle theme: green -> yellow -> white -> rainbow
+t    Cycle theme: rainbow -> green -> yellow -> white
 ```
 
 In rainbow mode, each cell's color shifts based on how many generations it has
@@ -191,10 +191,10 @@ Small patterns that take a very long time to stabilize.
 
 | Theme | Description |
 |-------|-------------|
-| `green` | (default) |
+| `rainbow` | (default) Cell color cycles through the spectrum based on age |
+| `green` | Classic green |
 | `yellow` | imitating an "amber" CRT monitor-style |
 | `white` | Plain white on black |
-| `rainbow` | Cell color cycles through the spectrum based on age |
 
 Switch theme at runtime with `t`, or set at launch with `--theme NAME`.
 
