@@ -1,5 +1,7 @@
 # life.py
 
+![demo](demo.gif)
+
 Conway's Game of Life for the terminal, mostly adapted from a bootleg 1990s Turbo Pascal version a friend gave me
 
 ## Quick start
